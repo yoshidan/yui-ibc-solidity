@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
@@ -154,7 +156,7 @@ func (c *Chain) QueryClientState(ctx core.QueryContext) (*clienttypes.QueryClien
 	if err != nil {
 		return nil, err
 	} else if !found {
-		return nil, fmt.Errorf("client not found: %v", c.pathEnd.ClientID)
+		return nil, errors.WithStack(errors.Errorf("client not found: height = %d, %v", ctx.Height().GetRevisionHeight(), c.pathEnd.ClientID))
 	}
 	var clientState ibcexported.ClientState
 	if err := c.Codec().UnmarshalInterface(s, &clientState); err != nil {
