@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,7 +60,6 @@ func (c *Chain) SendMsgs(msgs []sdk.Msg) ([]byte, error) {
 			return nil, err
 		}
 		if _, err := c.client.WaitForReceiptAndGet(ctx, tx); err != nil {
-			log.Println("failed transaction ", "msg", msg)
 			return nil, err
 		}
 		if c.msgEventListener != nil {
@@ -133,7 +133,7 @@ func (c *Chain) TxConnectionOpenTry(opts *bind.TransactOpts, msg *conntypes.MsgC
 	for _, v := range msg.CounterpartyVersions {
 		versions = append(versions, ibchandler.VersionData(*v))
 	}
-	return c.ibcHandler.ConnectionOpenTry(opts, ibchandler.IBCMsgsMsgConnectionOpenTry{
+	data := ibchandler.IBCMsgsMsgConnectionOpenTry{
 		Counterparty: ibchandler.CounterpartyData{
 			ClientId:     msg.Counterparty.ClientId,
 			ConnectionId: msg.Counterparty.ConnectionId,
@@ -148,7 +148,10 @@ func (c *Chain) TxConnectionOpenTry(opts *bind.TransactOpts, msg *conntypes.MsgC
 		ProofConsensus:       msg.ProofConsensus,
 		ProofHeight:          pbToHandlerHeight(msg.ProofHeight),
 		ConsensusHeight:      pbToHandlerHeight(msg.ConsensusHeight),
-	})
+	}
+	v, _ := json.Marshal(data)
+	log.Println("start to call ConnectionOpenTry", "msg", v)
+	return c.ibcHandler.ConnectionOpenTry(opts, data)
 }
 
 func (c *Chain) TxConnectionOpenAck(opts *bind.TransactOpts, msg *conntypes.MsgConnectionOpenAck) (*gethtypes.Transaction, error) {
