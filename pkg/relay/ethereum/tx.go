@@ -59,6 +59,7 @@ func (c *Chain) SendMsgs(msgs []sdk.Msg) ([]byte, error) {
 			return nil, err
 		}
 		if _, err := c.client.WaitForReceiptAndGet(ctx, tx); err != nil {
+			log.Println("failed transaction ", "msg", msg)
 			return nil, err
 		}
 		if c.msgEventListener != nil {
