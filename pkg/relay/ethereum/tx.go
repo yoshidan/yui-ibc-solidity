@@ -76,7 +76,7 @@ func (c *Chain) SendMsgs(msgs []sdk.Msg) ([]byte, error) {
 func (c *Chain) Send(msgs []sdk.Msg) bool {
 	_, err := c.SendMsgs(msgs)
 	if err != nil {
-		log.Println("ethereum: failed to send:", err)
+		log.Println("ethereum: failed to send:", c.config.ChainId, err)
 	}
 	return err == nil
 }
@@ -94,11 +94,14 @@ func (c *Chain) TxCreateClient(opts *bind.TransactOpts, msg *clienttypes.MsgCrea
 	if err != nil {
 		return nil, err
 	}
-	return c.ibcHandler.CreateClient(opts, ibchandler.IBCMsgsMsgCreateClient{
+	data := ibchandler.IBCMsgsMsgCreateClient{
 		ClientType:          clientState.ClientType(),
 		ClientStateBytes:    clientStateBytes,
 		ConsensusStateBytes: consensusStateBytes,
-	})
+	}
+	v, _ := json.Marshal(data)
+	log.Println("start to call TxCreateClient", "chain", c.chainID, "data", v)
+	return c.ibcHandler.CreateClient(opts, data)
 }
 
 func (c *Chain) TxUpdateClient(opts *bind.TransactOpts, msg *clienttypes.MsgUpdateClient) (*gethtypes.Transaction, error) {
@@ -106,14 +109,17 @@ func (c *Chain) TxUpdateClient(opts *bind.TransactOpts, msg *clienttypes.MsgUpda
 	if err != nil {
 		return nil, err
 	}
-	return c.ibcHandler.UpdateClient(opts, ibchandler.IBCMsgsMsgUpdateClient{
+	data := ibchandler.IBCMsgsMsgUpdateClient{
 		ClientId:      msg.ClientId,
 		ClientMessage: headerBytes,
-	})
+	}
+	v, _ := json.Marshal(data)
+	log.Println("start to call TxUpdateClient", "chain", c.chainID, "data", v)
+	return c.ibcHandler.UpdateClient(opts, data)
 }
 
 func (c *Chain) TxConnectionOpenInit(opts *bind.TransactOpts, msg *conntypes.MsgConnectionOpenInit) (*gethtypes.Transaction, error) {
-	return c.ibcHandler.ConnectionOpenInit(opts, ibchandler.IBCMsgsMsgConnectionOpenInit{
+	data := ibchandler.IBCMsgsMsgConnectionOpenInit{
 		ClientId: msg.ClientId,
 		Counterparty: ibchandler.CounterpartyData{
 			ClientId:     msg.Counterparty.ClientId,
@@ -121,7 +127,10 @@ func (c *Chain) TxConnectionOpenInit(opts *bind.TransactOpts, msg *conntypes.Msg
 			Prefix:       ibchandler.MerklePrefixData(msg.Counterparty.Prefix),
 		},
 		DelayPeriod: msg.DelayPeriod,
-	})
+	}
+	v, _ := json.Marshal(data)
+	log.Println("start to call TxConnectionOpenInit", "chain", c.chainID, "data", v)
+	return c.ibcHandler.ConnectionOpenInit(opts, data)
 }
 
 func (c *Chain) TxConnectionOpenTry(opts *bind.TransactOpts, msg *conntypes.MsgConnectionOpenTry) (*gethtypes.Transaction, error) {
@@ -150,7 +159,7 @@ func (c *Chain) TxConnectionOpenTry(opts *bind.TransactOpts, msg *conntypes.MsgC
 		ConsensusHeight:      pbToHandlerHeight(msg.ConsensusHeight),
 	}
 	v, _ := json.Marshal(data)
-	log.Println("start to call ConnectionOpenTry", "msg", v)
+	log.Println("start to call TxConnectionOpenTry", "chain", c.chainID, "data", v)
 	return c.ibcHandler.ConnectionOpenTry(opts, data)
 }
 
@@ -159,7 +168,7 @@ func (c *Chain) TxConnectionOpenAck(opts *bind.TransactOpts, msg *conntypes.MsgC
 	if err != nil {
 		return nil, err
 	}
-	return c.ibcHandler.ConnectionOpenAck(opts, ibchandler.IBCMsgsMsgConnectionOpenAck{
+	data := ibchandler.IBCMsgsMsgConnectionOpenAck{
 		ConnectionId:     msg.ConnectionId,
 		ClientStateBytes: clientStateBytes,
 		Version: ibchandler.VersionData{
@@ -172,15 +181,21 @@ func (c *Chain) TxConnectionOpenAck(opts *bind.TransactOpts, msg *conntypes.MsgC
 		ProofConsensus:           msg.ProofConsensus,
 		ProofHeight:              pbToHandlerHeight(msg.ProofHeight),
 		ConsensusHeight:          pbToHandlerHeight(msg.ConsensusHeight),
-	})
+	}
+	v, _ := json.Marshal(data)
+	log.Println("start to call TxConnectionOpenAck", "chain", c.chainID, "data", v)
+	return c.ibcHandler.ConnectionOpenAck(opts, data)
 }
 
 func (c *Chain) TxConnectionOpenConfirm(opts *bind.TransactOpts, msg *conntypes.MsgConnectionOpenConfirm) (*gethtypes.Transaction, error) {
-	return c.ibcHandler.ConnectionOpenConfirm(opts, ibchandler.IBCMsgsMsgConnectionOpenConfirm{
+	data := ibchandler.IBCMsgsMsgConnectionOpenConfirm{
 		ConnectionId: msg.ConnectionId,
 		ProofAck:     msg.ProofAck,
 		ProofHeight:  pbToHandlerHeight(msg.ProofHeight),
-	})
+	}
+	v, _ := json.Marshal(data)
+	log.Println("start to call TxConnectionOpenConfirm", "chain", c.chainID, "data", v)
+	return c.ibcHandler.ConnectionOpenConfirm(opts, data)
 }
 
 func (c *Chain) TxChannelOpenInit(opts *bind.TransactOpts, msg *chantypes.MsgChannelOpenInit) (*gethtypes.Transaction, error) {
